@@ -1,0 +1,39 @@
+
+
+#ifndef _COPROCESSOR_h
+#define _COPROCESSOR_h
+
+struct coprocessor_struct
+{
+    //inputs
+    bool wiimote_connected = false;
+    int wiimote_pitch = 0;
+    int wiimote_roll = 0;
+    bool wiimote_a = false;
+    bool wiimote_b = false;
+    bool wiimote_c = false;
+    bool wiimote_z = false;
+    bool wiimote_1 = false;
+    bool wiimote_2 = false;
+    bool wiimote_minus = false;
+    bool wiimote_plus = false;
+    bool wiimote_up = false;
+    bool wiimote_down = false;
+    bool wiimote_left = false;
+    bool wiimote_right = false;
+    bool wiimote_home = false;
+
+    //outputs
+    bool wiimote_rumble = false;
+    uint8_t wiimote_leds = 0x00;
+
+    //inputs
+    int head_pitch = 0;
+    int head_roll = 0;
+    int head_tap = 0;
+};
+
+void coprocessor_update(coprocessor_struct *coprocessor);
+void coprocessor_init(void);
+
+#endif
