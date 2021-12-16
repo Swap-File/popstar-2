@@ -1,10 +1,9 @@
+#ifndef _CPU2_h
+#define _CPU2_h
 
+#include <Arduino.h>
 
-#ifndef _COPROCESSOR_h
-#define _COPROCESSOR_h
-
-struct coprocessor_struct
-{
+struct cpu2_struct {
     //inputs
     bool wiimote_connected = false;
     int wiimote_pitch = 0;
@@ -33,7 +32,7 @@ struct coprocessor_struct
     int head_tap = 0;
 };
 
-void coprocessor_update(coprocessor_struct *coprocessor);
-void coprocessor_init(void);
+void cpu2_update(cpu2_struct *cpu2);
+void cpu2_init(void);
 
 #endif
