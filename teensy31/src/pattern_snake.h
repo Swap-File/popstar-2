@@ -85,7 +85,7 @@ void pattern_snake_setup() {
 }
 
 void pattern_snake_draw(CRGB Background_Array[MATRIX_WIDTH][MATRIX_HEIGHT], const struct CRGBPalette16 *palette) {
-	DimAll(250,Background_Array);
+	pattern_common_dimall(250,Background_Array);
 
 	fill_palette(colors, SNAKE_LENGTH, initialHue++, 5, *palette, 255, LINEARBLEND);
 

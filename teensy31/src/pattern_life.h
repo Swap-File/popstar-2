@@ -59,7 +59,7 @@ void pattern_life_setup() {
 
 
 void pattern_life_draw(CRGB Background_Array[MATRIX_WIDTH][MATRIX_HEIGHT], const struct CRGBPalette16 *palette) { // PaletteAniCurrent
-	DimAll(250,Background_Array);
+	pattern_common_dimall(250,Background_Array);
 	// Display current generation
 	for (int i = 0; i < MATRIX_WIDTH; i++) {
 		for (int j = 0; j < MATRIX_HEIGHT; j++) {

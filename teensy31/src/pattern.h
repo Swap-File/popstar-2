@@ -1,63 +1,75 @@
 #include <Arduino.h>
-#include "main.h"
+
 #include "FastLED.h"
+#include "Metro.h"
+#include "main.h"
+
+Metro PaletteBlender = Metro(10, 1);
+#define BLEND_AMT 3
 
 static int8_t requested_palette = 0;
-
-#include "pattern_minor.h"
-#include "pattern_life.h"
-#include "pattern_munch.h"
-#include "pattern_noise.h"
-#include "pattern_snake.h"
-#include "pattern_fft.h"
-
 static int32_t palette_change_time = 0;
 static int32_t background_change_time = 0;
 static uint32_t ani_timer_delay = 5;
 static uint32_t ani_timer = 0;
 
-void pattern_update(const struct popstar_struct *helmet, CRGB Background_Array[MATRIX_WIDTH][MATRIX_HEIGHT]) {
-    if (helmet->background_mode <= BACKGROUND_FFT_LAST && helmet->background_mode >= BACKGROUND_FFT_FIRST)
-        pattern_fft(Background_Array, helmet);
-    if (helmet->background_mode <= BACKGROUND_NOISE_LAST && helmet->background_mode >= BACKGROUND_NOISE_FIRST)
+#include "pattern_fft.h"
+#include "pattern_life.h"
+#include "pattern_minor.h"
+#include "pattern_munch.h"
+#include "pattern_noise.h"
+#include "pattern_snake.h"
+
+static CRGBPalette16 PaletteNoiseTarget = CRGBPalette16(PartyColors_p);
+static CRGBPalette16 PaletteAniTarget = CRGBPalette16(PartyColors_p);
+
+static CHSV color1Target = CHSV(0, 255, 255);
+static CHSV color2Target = CHSV(64, 255, 255);
+
+void pattern_update(const struct popstar_struct *helmet, CRGB Background_Array[MATRIX_WIDTH][MATRIX_HEIGHT], bool fresh_fft, CRGB Chin_array[CHIN_WIDTH][CHIN_HEIGHT]) {
+    pattern_fft_chin(Chin_array, helmet);
+
+    if (helmet->background_mode <= PATTERN_FFT_LAST && helmet->background_mode >= PATTERN_FFT_FIRST && fresh_fft) 
+      pattern_fft(Background_Array, helmet);
+    if (helmet->background_mode <= PATTERN_NOISE_LAST && helmet->background_mode >= PATTERN_NOISE_FIRST && fresh_fft)
         pattern_noise(Background_Array, helmet);
 
-    if (helmet->background_mode <= BACKGROUND_ANI_LAST && helmet->background_mode >= BACKGROUND_ANI_FIRST) {
+    if (helmet->background_mode <= PATTERN_ANI_LAST && helmet->background_mode >= PATTERN_ANI_FIRST) {
         if (helmet->background_mode != helmet->background_mode_last || millis() - ani_timer > ani_timer_delay) {
             switch (helmet->background_mode) {
-                case BACKGROUND_ANI_MUNCH:
+                case PATTERN_ANI_MUNCH:
                     pattern_munch_draw(Background_Array, &(helmet->PaletteAniCurrent));
                     ani_timer_delay = 15;
                     break;
-                case BACKGROUND_ANI_DRIFT:
+                case PATTERN_ANI_DRIFT:
                     pattern_minor_drift1(Background_Array, &(helmet->PaletteAniCurrent));
                     ani_timer_delay = 10;
                     break;
-                case BACKGROUND_ANI_GLITTER:
+                case PATTERN_ANI_GLITTER:
                     if (helmet->background_mode_last != helmet->background_mode)
                         pattern_minor_glitter(3, Background_Array, &(helmet->PaletteAniCurrent));
                     pattern_minor_glitter(1, Background_Array, &(helmet->PaletteAniCurrent));
                     ani_timer_delay = 10;
                     break;
-                case BACKGROUND_ANI_JUGGLE:
+                case PATTERN_ANI_JUGGLE:
                     pattern_minor_juggle(Background_Array);
                     ani_timer_delay = 10;
                     break;
-                case BACKGROUND_ANI_SNAKE:
+                case PATTERN_ANI_SNAKE:
                     if (helmet->background_mode_last != helmet->background_mode)
                         pattern_snake_setup();
                     pattern_snake_draw(Background_Array, &(helmet->PaletteAniCurrent));
                     ani_timer_delay = 20;
                     break;
-                case BACKGROUND_ANI_DRIFT2:
+                case PATTERN_ANI_DRIFT2:
                     pattern_minor_drift2(Background_Array, &(helmet->PaletteAniCurrent));
                     ani_timer_delay = 15;
                     break;
-                case BACKGROUND_ANI_WAVE:
+                case PATTERN_ANI_WAVE:
                     pattern_minor_wave(Background_Array, &(helmet->PaletteAniCurrent));
                     ani_timer_delay = 15;
                     break;
-                case BACKGROUND_ANI_LIFE:
+                case PATTERN_ANI_LIFE:
                     if (helmet->background_mode_last != helmet->background_mode)
                         pattern_life_setup();
                     pattern_life_draw(Background_Array, &(helmet->PaletteAniCurrent));
@@ -65,6 +77,16 @@ void pattern_update(const struct popstar_struct *helmet, CRGB Background_Array[M
                     break;
             }
             ani_timer = millis();
+        }
+    }
+
+    if (helmet->chin_mode == CHIN_MIRROR_MID) {
+    }
+    if (helmet->chin_mode == CHIN_CLONE_MID) {
+        for (uint8_t y = 0; y < CHIN_HEIGHT; y++) {
+            for (uint8_t x = 0; x < CHIN_WIDTH; x++) {
+                Chin_array[x][y] = Background_Array[x + 8 ][y ];
+            }
         }
     }
 }
@@ -78,24 +100,24 @@ void pattern_set_background(uint8_t number, struct popstar_struct *helmet) {
     if (number == INCREMENT) number = 1;
     if (number == DECREMENT) number = -1;
 
-    if (helmet->background_mode >= BACKGROUND_NOISE_FIRST && helmet->background_mode <= BACKGROUND_NOISE_LAST) {
+    if (helmet->background_mode >= PATTERN_NOISE_FIRST && helmet->background_mode <= PATTERN_NOISE_LAST) {
         helmet->background_mode += number;
-        if (helmet->background_mode < BACKGROUND_NOISE_FIRST)
-            helmet->background_mode = BACKGROUND_NOISE_LAST;
-        if (helmet->background_mode > BACKGROUND_NOISE_LAST)
-            helmet->background_mode = BACKGROUND_NOISE_FIRST;
+        if (helmet->background_mode < PATTERN_NOISE_FIRST)
+            helmet->background_mode = PATTERN_NOISE_LAST;
+        if (helmet->background_mode > PATTERN_NOISE_LAST)
+            helmet->background_mode = PATTERN_NOISE_FIRST;
     }
 
-    if (helmet->background_mode >= BACKGROUND_ANI_FIRST && helmet->background_mode <= BACKGROUND_ANI_LAST) {
+    if (helmet->background_mode >= PATTERN_ANI_FIRST && helmet->background_mode <= PATTERN_ANI_LAST) {
         helmet->background_mode += number;
-        if (helmet->background_mode < BACKGROUND_ANI_FIRST)
-            helmet->background_mode = BACKGROUND_ANI_LAST;
-        if (helmet->background_mode > BACKGROUND_ANI_LAST)
-            helmet->background_mode = BACKGROUND_ANI_FIRST;
+        if (helmet->background_mode < PATTERN_ANI_FIRST)
+            helmet->background_mode = PATTERN_ANI_LAST;
+        if (helmet->background_mode > PATTERN_ANI_LAST)
+            helmet->background_mode = PATTERN_ANI_FIRST;
     }
 
-    if (helmet->background_mode >= BACKGROUND_FFT_FIRST && helmet->background_mode <= BACKGROUND_FFT_LAST) {
-        helmet->background_mode = random8(BACKGROUND_NOISE_FIRST, BACKGROUND_NOISE_LAST + 1);  // exit to random sound mode
+    if (helmet->background_mode >= PATTERN_FFT_FIRST && helmet->background_mode <= PATTERN_FFT_LAST) {
+        helmet->background_mode = random8(PATTERN_NOISE_FIRST, PATTERN_NOISE_LAST + 1);  // exit to random sound mode
     }
 
     background_change_time = millis();
@@ -135,97 +157,97 @@ void pattern_set_palette(uint8_t req, bool immediate, struct popstar_struct *hel
 
     switch (requested_palette) {
         case 0:
-            helmet->PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, w, w, b, b, b, b, b, bl);
-            helmet->PaletteAniTarget = CRGBPalette16(w, w, w, b, b, b, b, b, w, w, w, b, b, b, b, b);
-            helmet->color1Target = b_hsv;
-            helmet->color2Target = w_hsv;
+            PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, w, w, b, b, b, b, b, bl);
+            PaletteAniTarget = CRGBPalette16(w, w, w, b, b, b, b, b, w, w, w, b, b, b, b, b);
+            color1Target = b_hsv;
+            color2Target = w_hsv;
 
             break;
         case 1:
-            helmet->PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, w, a, g, g, g, r, bl, bl);
-            helmet->PaletteAniTarget = CRGBPalette16(w, a, g, g, r, w, a, g, g, g, r, w, a, g, g, r);
-            helmet->color1Target = g_hsv;
-            helmet->color2Target = a_hsv;
+            PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, w, a, g, g, g, r, bl, bl);
+            PaletteAniTarget = CRGBPalette16(w, a, g, g, r, w, a, g, g, g, r, w, a, g, g, r);
+            color1Target = g_hsv;
+            color2Target = a_hsv;
 
             break;
         case 2:
-            helmet->PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, a, p, pi, pi, pi, r, bl, bl);
-            helmet->PaletteAniTarget = CRGBPalette16(a, p, pi, pi, r, a, p, pi, pi, pi, r, a, p, pi, pi, r);
-            helmet->color1Target = pi_hsv;
-            helmet->color2Target = a_hsv;
+            PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, a, p, pi, pi, pi, r, bl, bl);
+            PaletteAniTarget = CRGBPalette16(a, p, pi, pi, r, a, p, pi, pi, pi, r, a, p, pi, pi, r);
+            color1Target = pi_hsv;
+            color2Target = a_hsv;
 
             break;
         case 3:
-            helmet->PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, g, a, b, b, b, b, bl, bl);
-            helmet->PaletteAniTarget = CRGBPalette16(g, a, b, b, b, g, a, b, b, b, g, a, b, b, b, b);
-            helmet->color1Target = b_hsv;
-            helmet->color2Target = g_hsv;
+            PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, g, a, b, b, b, b, bl, bl);
+            PaletteAniTarget = CRGBPalette16(g, a, b, b, b, g, a, b, b, b, g, a, b, b, b, b);
+            color1Target = b_hsv;
+            color2Target = g_hsv;
 
             break;
         case 4:
-            helmet->PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, p, p, y, y, bl, bl, bl, bl);
-            helmet->PaletteAniTarget = CRGBPalette16(p, p, y, y, p, p, y, y, p, p, y, y, p, p, y, y);
-            helmet->color1Target = p_hsv;
-            helmet->color2Target = y_hsv;
+            PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, p, p, y, y, bl, bl, bl, bl);
+            PaletteAniTarget = CRGBPalette16(p, p, y, y, p, p, y, y, p, p, y, y, p, p, y, y);
+            color1Target = p_hsv;
+            color2Target = y_hsv;
 
             break;
         case 5:
-            helmet->PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, a, a, y, y, y, y, bl, bl);
-            helmet->PaletteAniTarget = CRGBPalette16(a, a, y, y, y, a, a, y, y, y, y, a, a, y, y, y);
-            helmet->color1Target = a_hsv;
-            helmet->color2Target = y_hsv;
+            PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, a, a, y, y, y, y, bl, bl);
+            PaletteAniTarget = CRGBPalette16(a, a, y, y, y, a, a, y, y, y, y, a, a, y, y, y);
+            color1Target = a_hsv;
+            color2Target = y_hsv;
 
             break;
         case 6:
-            helmet->PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, b, r, bl, bl, bl, bl, bl, bl);
-            helmet->PaletteAniTarget = CRGBPalette16(b, r, b, r, b, r, b, r, b, r, b, r, b, r, b, r);
-            helmet->color1Target = r_hsv;
-            helmet->color2Target = b_hsv;
+            PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, b, r, bl, bl, bl, bl, bl, bl);
+            PaletteAniTarget = CRGBPalette16(b, r, b, r, b, r, b, r, b, r, b, r, b, r, b, r);
+            color1Target = r_hsv;
+            color2Target = b_hsv;
 
             break;
         case 7:
-            helmet->PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, o, o, p, bl, bl, bl, bl, bl);
-            helmet->PaletteAniTarget = CRGBPalette16(o, o, p, o, o, p, o, o, p, o, o, p, o, o, p, o);
-            helmet->color1Target = o_hsv;
-            helmet->color2Target = p_hsv;
+            PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, o, o, p, bl, bl, bl, bl, bl);
+            PaletteAniTarget = CRGBPalette16(o, o, p, o, o, p, o, o, p, o, o, p, o, o, p, o);
+            color1Target = o_hsv;
+            color2Target = p_hsv;
 
             break;
         case 8:
-            helmet->PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, r, o, y, g, bl, bl, bl, bl);
-            helmet->PaletteAniTarget = CRGBPalette16(r, o, y, g, r, o, y, g, r, o, y, g, r, o, y, g);
-            helmet->color1Target = r_hsv;
-            helmet->color2Target = y_hsv;
+            PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, r, o, y, g, bl, bl, bl, bl);
+            PaletteAniTarget = CRGBPalette16(r, o, y, g, r, o, y, g, r, o, y, g, r, o, y, g);
+            color1Target = r_hsv;
+            color2Target = y_hsv;
 
             break;
         case 9:
-            helmet->PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, b, b, a, ra, ra, bl, bl, bl);
-            helmet->PaletteAniTarget = CRGBPalette16(b, b, a, ra, ra, b, b, a, ra, ra, b, b, a, ra, ra, b);
-            helmet->color1Target = b_hsv;
-            helmet->color2Target = ra_hsv;
+            PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, b, b, a, ra, ra, bl, bl, bl);
+            PaletteAniTarget = CRGBPalette16(b, b, a, ra, ra, b, b, a, ra, ra, b, b, a, ra, ra, b);
+            color1Target = b_hsv;
+            color2Target = ra_hsv;
 
             break;
         case 10: {
             uint8_t temp1 = random8();
             uint8_t temp2 = random8();
-            helmet->PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, r, r, temp1, temp2, bl, bl, bl, bl);
-            helmet->PaletteAniTarget = CRGBPalette16(r, r, temp1, temp2, r, r, temp1, temp2, r, r, temp1, temp2, r, r, temp1, temp2);
-            helmet->color1Target = r_hsv;
-            helmet->color2Target = CHSV(temp1, 255, 255);
+            PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, r, r, temp1, temp2, bl, bl, bl, bl);
+            PaletteAniTarget = CRGBPalette16(r, r, temp1, temp2, r, r, temp1, temp2, r, r, temp1, temp2, r, r, temp1, temp2);
+            color1Target = r_hsv;
+            color2Target = CHSV(temp1, 255, 255);
         } break;
         case 11:
-            helmet->PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, b, p, pi, r, bl, bl, bl, bl);
-            helmet->PaletteAniTarget = CRGBPalette16(b, p, pi, r, b, p, pi, r, b, p, pi, r, b, p, pi, r);
-            helmet->color1Target = b_hsv;
-            helmet->color2Target = r_hsv;
+            PaletteNoiseTarget = CRGBPalette16(bl, bl, bl, bl, bl, bl, bl, bl, b, p, pi, r, bl, bl, bl, bl);
+            PaletteAniTarget = CRGBPalette16(b, p, pi, r, b, p, pi, r, b, p, pi, r, b, p, pi, r);
+            color1Target = b_hsv;
+            color2Target = r_hsv;
 
             break;
     }
 
     if (immediate) {
-        helmet->color1 = helmet->color1Target;
-        helmet->color2 = helmet->color2Target;
-        nblendPaletteTowardPalette(helmet->PaletteNoiseCurrent, helmet->PaletteNoiseTarget, 255);
-        nblendPaletteTowardPalette(helmet->PaletteAniCurrent, helmet->PaletteAniTarget, 255);
+        helmet->color1 = color1Target;
+        helmet->color2 = color2Target;
+        nblendPaletteTowardPalette(helmet->PaletteNoiseCurrent, PaletteNoiseTarget, 255);
+        nblendPaletteTowardPalette(helmet->PaletteAniCurrent, PaletteAniTarget, 255);
     }
 
     palette_change_time = millis();
@@ -247,5 +269,24 @@ void pattern_auto_update(struct popstar_struct *helmet) {
     if (millis() - background_change_time > 20000 && helmet->background_auto) {
         pattern_set_background(INCREMENT, helmet);
         background_change_time = millis();
+    }
+
+    // head direction changes
+    if (helmet->background_mode >= PATTERN_FFT_FIRST && helmet->background_mode <= PATTERN_FFT_LAST) {
+        if (helmet->cpu2.head_roll < -40)
+            helmet->background_mode = PATTERN_FFT_HORZ_BARS_LEFT;
+        else if (helmet->cpu2.head_roll > 40)
+            helmet->background_mode = PATTERN_FFT_HORZ_BARS_RIGHT;
+        else if (helmet->cpu2.head_pitch < -40)
+            helmet->background_mode = PATTERN_FFT_VERT_BARS_UP;
+        else if (helmet->cpu2.head_pitch > 40)
+            helmet->background_mode = PATTERN_FFT_VERT_BARS_DOWN;
+    }
+
+    if (PaletteBlender.check()) {
+        nblendPaletteTowardPalette(helmet->PaletteNoiseCurrent, PaletteNoiseTarget, BLEND_AMT);
+        nblendPaletteTowardPalette(helmet->PaletteAniCurrent, PaletteAniTarget, BLEND_AMT);
+        nblend(helmet->color1, color1Target, BLEND_AMT);
+        nblend(helmet->color2, color2Target, BLEND_AMT);
     }
 }

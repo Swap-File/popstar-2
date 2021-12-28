@@ -21,7 +21,7 @@ void cpu2_init(void) {
     Serial1.begin(115200);  // ESP32 cpu2 for Wiimote & ADXL345
 }
 
-void cpu2_update(cpu2_struct *cpu2) {
+void cpu2_update(struct cpu2_struct *cpu2) {
     while (Serial1.available()) {
         // read in a byte
         incoming_raw_buffer[incoming_index] = Serial1.read();

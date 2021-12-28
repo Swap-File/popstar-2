@@ -32,7 +32,7 @@ struct cpu2_struct {
     int head_tap = 0;
 };
 
-void cpu2_update(cpu2_struct *cpu2);
+void cpu2_update(struct cpu2_struct *cpu2);
 void cpu2_init(void);
 
 #endif
