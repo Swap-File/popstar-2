@@ -27,16 +27,17 @@ static CHSV color1Target = CHSV(0, 255, 255);
 static CHSV color2Target = CHSV(64, 255, 255);
 
 void pattern_update(const struct popstar_struct *helmet, CRGB Background_Array[MATRIX_WIDTH][MATRIX_HEIGHT], bool fresh_fft, CRGB Chin_array[CHIN_WIDTH][CHIN_HEIGHT]) {
-    pattern_fft_chin(Chin_array, helmet);
+    if (fresh_fft)
+        pattern_fft_chin(Chin_array, helmet);
 
-    if (helmet->background_mode <= PATTERN_FFT_LAST && helmet->background_mode >= PATTERN_FFT_FIRST && fresh_fft) 
-      pattern_fft(Background_Array, helmet);
-    if (helmet->background_mode <= PATTERN_NOISE_LAST && helmet->background_mode >= PATTERN_NOISE_FIRST && fresh_fft)
+    if (helmet->pattern_mode <= PATTERN_FFT_LAST && helmet->pattern_mode >= PATTERN_FFT_FIRST && fresh_fft)
+        pattern_fft(Background_Array, helmet);
+    if (helmet->pattern_mode <= PATTERN_NOISE_LAST && helmet->pattern_mode >= PATTERN_NOISE_FIRST && fresh_fft)
         pattern_noise(Background_Array, helmet);
 
-    if (helmet->background_mode <= PATTERN_ANI_LAST && helmet->background_mode >= PATTERN_ANI_FIRST) {
-        if (helmet->background_mode != helmet->background_mode_last || millis() - ani_timer > ani_timer_delay) {
-            switch (helmet->background_mode) {
+    if (helmet->pattern_mode <= PATTERN_ANI_LAST && helmet->pattern_mode >= PATTERN_ANI_FIRST) {
+        if (helmet->pattern_mode != helmet->pattern_mode_last || millis() - ani_timer > ani_timer_delay) {
+            switch (helmet->pattern_mode) {
                 case PATTERN_ANI_MUNCH:
                     pattern_munch_draw(Background_Array, &(helmet->PaletteAniCurrent));
                     ani_timer_delay = 15;
@@ -46,7 +47,7 @@ void pattern_update(const struct popstar_struct *helmet, CRGB Background_Array[M
                     ani_timer_delay = 10;
                     break;
                 case PATTERN_ANI_GLITTER:
-                    if (helmet->background_mode_last != helmet->background_mode)
+                    if (helmet->pattern_mode_last != helmet->pattern_mode)
                         pattern_minor_glitter(3, Background_Array, &(helmet->PaletteAniCurrent));
                     pattern_minor_glitter(1, Background_Array, &(helmet->PaletteAniCurrent));
                     ani_timer_delay = 10;
@@ -56,7 +57,7 @@ void pattern_update(const struct popstar_struct *helmet, CRGB Background_Array[M
                     ani_timer_delay = 10;
                     break;
                 case PATTERN_ANI_SNAKE:
-                    if (helmet->background_mode_last != helmet->background_mode)
+                    if (helmet->pattern_mode_last != helmet->pattern_mode)
                         pattern_snake_setup();
                     pattern_snake_draw(Background_Array, &(helmet->PaletteAniCurrent));
                     ani_timer_delay = 20;
@@ -70,7 +71,7 @@ void pattern_update(const struct popstar_struct *helmet, CRGB Background_Array[M
                     ani_timer_delay = 15;
                     break;
                 case PATTERN_ANI_LIFE:
-                    if (helmet->background_mode_last != helmet->background_mode)
+                    if (helmet->pattern_mode_last != helmet->pattern_mode)
                         pattern_life_setup();
                     pattern_life_draw(Background_Array, &(helmet->PaletteAniCurrent));
                     ani_timer_delay = 15;
@@ -85,7 +86,7 @@ void pattern_update(const struct popstar_struct *helmet, CRGB Background_Array[M
     if (helmet->chin_mode == CHIN_CLONE_MID) {
         for (uint8_t y = 0; y < CHIN_HEIGHT; y++) {
             for (uint8_t x = 0; x < CHIN_WIDTH; x++) {
-                Chin_array[x][y] = Background_Array[x + 8 ][y ];
+                Chin_array[x][y] = Background_Array[x + 8][y];
             }
         }
     }
@@ -93,31 +94,31 @@ void pattern_update(const struct popstar_struct *helmet, CRGB Background_Array[M
 
 void pattern_set_background(uint8_t number, struct popstar_struct *helmet) {
     if (number != INCREMENT && number != DECREMENT) {
-        helmet->background_mode = number;
+        helmet->pattern_mode = number;
         number = 0;
     }
 
     if (number == INCREMENT) number = 1;
     if (number == DECREMENT) number = -1;
 
-    if (helmet->background_mode >= PATTERN_NOISE_FIRST && helmet->background_mode <= PATTERN_NOISE_LAST) {
-        helmet->background_mode += number;
-        if (helmet->background_mode < PATTERN_NOISE_FIRST)
-            helmet->background_mode = PATTERN_NOISE_LAST;
-        if (helmet->background_mode > PATTERN_NOISE_LAST)
-            helmet->background_mode = PATTERN_NOISE_FIRST;
+    if (helmet->pattern_mode >= PATTERN_NOISE_FIRST && helmet->pattern_mode <= PATTERN_NOISE_LAST) {
+        helmet->pattern_mode += number;
+        if (helmet->pattern_mode < PATTERN_NOISE_FIRST)
+            helmet->pattern_mode = PATTERN_NOISE_LAST;
+        if (helmet->pattern_mode > PATTERN_NOISE_LAST)
+            helmet->pattern_mode = PATTERN_NOISE_FIRST;
     }
 
-    if (helmet->background_mode >= PATTERN_ANI_FIRST && helmet->background_mode <= PATTERN_ANI_LAST) {
-        helmet->background_mode += number;
-        if (helmet->background_mode < PATTERN_ANI_FIRST)
-            helmet->background_mode = PATTERN_ANI_LAST;
-        if (helmet->background_mode > PATTERN_ANI_LAST)
-            helmet->background_mode = PATTERN_ANI_FIRST;
+    if (helmet->pattern_mode >= PATTERN_ANI_FIRST && helmet->pattern_mode <= PATTERN_ANI_LAST) {
+        helmet->pattern_mode += number;
+        if (helmet->pattern_mode < PATTERN_ANI_FIRST)
+            helmet->pattern_mode = PATTERN_ANI_LAST;
+        if (helmet->pattern_mode > PATTERN_ANI_LAST)
+            helmet->pattern_mode = PATTERN_ANI_FIRST;
     }
 
-    if (helmet->background_mode >= PATTERN_FFT_FIRST && helmet->background_mode <= PATTERN_FFT_LAST) {
-        helmet->background_mode = random8(PATTERN_NOISE_FIRST, PATTERN_NOISE_LAST + 1);  // exit to random sound mode
+    if (helmet->pattern_mode >= PATTERN_FFT_FIRST && helmet->pattern_mode <= PATTERN_FFT_LAST) {
+        helmet->pattern_mode = random8(PATTERN_NOISE_FIRST, PATTERN_NOISE_LAST + 1);  // exit to random sound mode
     }
 
     background_change_time = millis();
@@ -254,7 +255,7 @@ void pattern_set_palette(uint8_t req, bool immediate, struct popstar_struct *hel
 }
 void pattern_auto_update(struct popstar_struct *helmet) {
     // dont advance timers when off
-    if (helmet->menu_state == 0) {
+    if (helmet->state != STATE_RUNNING) {
         palette_change_time = millis();
         background_change_time = millis();
     }
@@ -271,17 +272,26 @@ void pattern_auto_update(struct popstar_struct *helmet) {
         background_change_time = millis();
     }
 
+
+
+#define HEAD_ANGLE 25
     // head direction changes
-    if (helmet->background_mode >= PATTERN_FFT_FIRST && helmet->background_mode <= PATTERN_FFT_LAST) {
-        if (helmet->cpu2.head_roll < -40)
-            helmet->background_mode = PATTERN_FFT_HORZ_BARS_LEFT;
-        else if (helmet->cpu2.head_roll > 40)
-            helmet->background_mode = PATTERN_FFT_HORZ_BARS_RIGHT;
-        else if (helmet->cpu2.head_pitch < -40)
-            helmet->background_mode = PATTERN_FFT_VERT_BARS_UP;
-        else if (helmet->cpu2.head_pitch > 40)
-            helmet->background_mode = PATTERN_FFT_VERT_BARS_DOWN;
+    //if (helmet->pattern_mode >= PATTERN_FFT_FIRST && helmet->pattern_mode <= PATTERN_FFT_LAST || helmet->pattern_mode >= PATTERN_NOISE_FIRST && helmet->pattern_mode <= PATTERN_NOISE_LAST) {
+    if (helmet->cpu2.head_roll < -HEAD_ANGLE) {
+        helmet->pattern_mode = PATTERN_FFT_HORZ_BARS_RIGHT;
+        background_change_time = millis();
+    } else if (helmet->cpu2.head_roll > HEAD_ANGLE) {
+        helmet->pattern_mode = PATTERN_FFT_HORZ_BARS_LEFT;
+        background_change_time = millis();
+    } else if (helmet->cpu2.head_pitch < -HEAD_ANGLE) {
+        helmet->pattern_mode = PATTERN_FFT_VERT_BARS_UP;
+        background_change_time = millis();
+    }  else if (helmet->cpu2.head_pitch > HEAD_ANGLE) {
+        helmet->pattern_mode = PATTERN_FFT_VERT_BARS_DOWN;
+        background_change_time = millis();
     }
+
+    // }
 
     if (PaletteBlender.check()) {
         nblendPaletteTowardPalette(helmet->PaletteNoiseCurrent, PaletteNoiseTarget, BLEND_AMT);

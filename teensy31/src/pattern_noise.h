@@ -66,7 +66,7 @@ static void mapNoiseToLEDsUsingPalette2(const float band[], CRGB Background_Arra
 }
 
 void pattern_noise(CRGB Background_Array[MATRIX_WIDTH][MATRIX_HEIGHT], const struct popstar_struct *helmet) {
-    switch (helmet->background_mode) {
+    switch (helmet->pattern_mode) {
         case PATTERN_NOISE_1:
             scale = 55;
             x_noise = x_noise + helmet->fft.band[1] * 5;  // 0 to 5
@@ -179,7 +179,7 @@ void pattern_noise(CRGB Background_Array[MATRIX_WIDTH][MATRIX_HEIGHT], const str
 
     mapNoiseToLEDsUsingPalette2(helmet->fft.band, Background_Array,&(helmet->PaletteNoiseCurrent));
 
-    switch (helmet->background_mode) {
+    switch (helmet->pattern_mode) {
         case PATTERN_NOISE_1:
         case PATTERN_NOISE_2:
         case PATTERN_NOISE_5:

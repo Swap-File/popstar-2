@@ -22,10 +22,6 @@ struct cpu2_struct {
     bool wiimote_right = false;
     bool wiimote_home = false;
 
-    //outputs
-    bool wiimote_rumble = false;
-    uint8_t wiimote_leds = 0x00;
-
     //inputs
     int head_pitch = 0;
     int head_roll = 0;
@@ -34,5 +30,7 @@ struct cpu2_struct {
 
 void cpu2_update(struct cpu2_struct *cpu2);
 void cpu2_init(void);
+void cpu2_set_rumble(int duration_on, int duration_off, int cycles);
+void cpu2_set_leds(uint8_t leds);
 
 #endif

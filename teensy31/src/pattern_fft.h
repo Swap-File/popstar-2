@@ -31,28 +31,28 @@ static void calcfftcolor(CHSV *temp_color, uint8_t input, const struct CHSV *col
 }
 
 void pattern_fft(CRGB Background_Array[MATRIX_WIDTH][MATRIX_HEIGHT], const struct popstar_struct *helmet) {
-    if (helmet->background_mode == PATTERN_FFT_HORZ_BARS_RIGHT) {
+    if (helmet->pattern_mode == PATTERN_FFT_HORZ_BARS_RIGHT) {
         // move  data left 1
         for (uint8_t x = 1; x < MATRIX_WIDTH; x++) {
             for (uint8_t y = 0; y < MATRIX_HEIGHT; y++) {
                 Background_Array[x - 1][y] = Background_Array[x][y];
             }
         }
-    } else if (helmet->background_mode == PATTERN_FFT_HORZ_BARS_LEFT) {
+    } else if (helmet->pattern_mode == PATTERN_FFT_HORZ_BARS_LEFT) {
         // move  data right 1
         for (uint8_t x = (MATRIX_WIDTH - 1); x > 0; x--) {
             for (uint8_t y = 0; y < MATRIX_HEIGHT; y++) {
                 Background_Array[x][y] = Background_Array[x - 1][y];
             }
         }
-    } else if (helmet->background_mode == PATTERN_FFT_VERT_BARS_UP) {
+    } else if (helmet->pattern_mode == PATTERN_FFT_VERT_BARS_UP) {
         // move  data up  1
         for (uint8_t y = (MATRIX_HEIGHT - 1); y > 0; y--) {
             for (uint8_t x = 0; x < MATRIX_WIDTH; x++) {
                 Background_Array[x][y] = Background_Array[x][y - 1];
             }
         }
-    } else if (helmet->background_mode == PATTERN_FFT_VERT_BARS_DOWN) {
+    } else if (helmet->pattern_mode == PATTERN_FFT_VERT_BARS_DOWN) {
         // move data up  1
         for (uint8_t y = 1; y < MATRIX_HEIGHT; y++) {
             for (uint8_t x = 0; x < MATRIX_WIDTH; x++) {
@@ -61,18 +61,18 @@ void pattern_fft(CRGB Background_Array[MATRIX_WIDTH][MATRIX_HEIGHT], const struc
         }
     }
 
-    if (helmet->background_mode == PATTERN_FFT_HORZ_BARS_RIGHT ||
-        helmet->background_mode == PATTERN_FFT_HORZ_BARS_LEFT) {
+    if (helmet->pattern_mode == PATTERN_FFT_HORZ_BARS_RIGHT ||
+        helmet->pattern_mode == PATTERN_FFT_HORZ_BARS_LEFT) {
         for (uint8_t i = 0; i < 16; i++) {
             // make the tip of the color be color 2
             CHSV temp_color;
             calcfftcolor(&temp_color, helmet->fft.value_16[i], &(helmet->color1), &(helmet->color2));
-            if (helmet->background_mode == PATTERN_FFT_HORZ_BARS_RIGHT)
+            if (helmet->pattern_mode == PATTERN_FFT_HORZ_BARS_RIGHT)
                 Background_Array[23][i] = temp_color;
-            else if (helmet->background_mode == PATTERN_FFT_HORZ_BARS_LEFT)
+            else if (helmet->pattern_mode == PATTERN_FFT_HORZ_BARS_LEFT)
                 Background_Array[0][i] = temp_color;
         }
-    } else if (helmet->background_mode == PATTERN_FFT_HORZ_BARS_STATIC) {
+    } else if (helmet->pattern_mode == PATTERN_FFT_HORZ_BARS_STATIC) {
         for (uint8_t i = 0; i < 16; i++) {
             // make the tip of the color be color 2
             CHSV temp_color;
@@ -81,21 +81,21 @@ void pattern_fft(CRGB Background_Array[MATRIX_WIDTH][MATRIX_HEIGHT], const struc
                 Background_Array[index][i] = temp_color;
             }
         }
-    } else if (helmet->background_mode == PATTERN_FFT_VERT_BARS_UP ||
-               helmet->background_mode == PATTERN_FFT_VERT_BARS_DOWN) {
+    } else if (helmet->pattern_mode == PATTERN_FFT_VERT_BARS_UP ||
+               helmet->pattern_mode == PATTERN_FFT_VERT_BARS_DOWN) {
         for (uint8_t i = 0; i < 16; i++) {
             // make the tip of the color be color 2
             CHSV temp_color;
             calcfftcolor(&temp_color, helmet->fft.value_16[i], &(helmet->color1), &(helmet->color2));
-            if (helmet->background_mode == PATTERN_FFT_VERT_BARS_UP) {
+            if (helmet->pattern_mode == PATTERN_FFT_VERT_BARS_UP) {
                 Background_Array[i][0] = temp_color;
                 Background_Array[23 - i][0] = temp_color;
-            } else if (helmet->background_mode == PATTERN_FFT_VERT_BARS_DOWN) {
+            } else if (helmet->pattern_mode == PATTERN_FFT_VERT_BARS_DOWN) {
                 Background_Array[i][15] = temp_color;
                 Background_Array[23 - i][15] = temp_color;
             }
         }
-    } else if (helmet->background_mode == PATTERN_FFT_VERT_BARS_STATIC) {
+    } else if (helmet->pattern_mode == PATTERN_FFT_VERT_BARS_STATIC) {
         for (uint8_t i = 0; i < 12; i++) {
             // make the tip of the color be color 2
             CHSV temp_color;

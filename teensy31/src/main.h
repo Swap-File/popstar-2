@@ -4,6 +4,8 @@
 #include "cpu2.h"
 #include "fft.h"
 
+#define FAN_PIN 22
+
 // main background
 #define MATRIX_WIDTH 24
 #define MATRIX_HEIGHT 16
@@ -48,10 +50,12 @@
 #define PATTERN_ANI_LAST 24
 #define PATTERN_LAST 24
 //chin
+#define CHIN_FIRST 0
 #define CHIN_FFT_VERT 0
 #define CHIN_FFT_HORIZ 1
 #define CHIN_CLONE_MID 2
 #define CHIN_MIRROR_MID 3
+#define CHIN_LAST 3
 
 //palettes
 #define PALETTE_FIRST 0
@@ -66,38 +70,57 @@
 #define OUTLINE_HORIZONTAL ((11 + 9 + 11) * 2)
 #define OUTLINE_VERTICAL ((23) * 2)
 
- 
+#define STATE_RUNNING 0
+#define STATE_STARTING 1
+#define STATE_STOPPING 2
+#define STATE_STOPPED 3
+
+#define OUTLINE_FIRST 0
+#define  OUTLINE_BEAT_V   0
+#define OUTLINE_CONFETTI_H 1
+#define OUTLINE_CONFETTI_V 2
+#define OUTLINE_BEAT_H  3
+#define OUTLINE_SINELON_H 4
+#define OUTLINE_SINELON_V 5
+#define OUTLINE_LAST 3
+
 struct popstar_struct {
     fft_struct fft;
     cpu2_struct cpu2;
+    cpu2_struct cpu2_last;
 
-    int8_t menu_state = 2;
-    int8_t menu_state_last = 0;
+    int8_t state = STATE_STOPPED;
+    int8_t state_last = STATE_STOPPED;
 
-    int8_t background_mode = PATTERN_FFT_VERT_BARS_DOWN;
-    int8_t background_mode_last = background_mode;
+    int8_t pattern_mode = PATTERN_FFT_VERT_BARS_DOWN;
+    int8_t pattern_mode_last = pattern_mode;
 
-    CRGB Background_Array[MATRIX_WIDTH][MATRIX_HEIGHT];  // actual background Array
+    CRGB pattern_array[MATRIX_WIDTH][MATRIX_HEIGHT];  // actual background Array
 
     int8_t chin_mode = CHIN_FFT_HORIZ;
     CRGB chin_array[CHIN_WIDTH][CHIN_HEIGHT];
 
-    int  line_state_last = 0;
+    int line_state_last = 0;
     int line_state = 0;
 
     // auto update true or false
     boolean palette_auto = true;
     boolean background_auto = true;
+    boolean spotlight = true;
+
+    uint8_t outline_mode = OUTLINE_BEAT_H;
 
     CRGB outer_horiz[OUTLINE_HORIZONTAL];
-    CRGB outer_vert[OUTLINE_VERTICAL];
-  
+    CRGB outline_vert[OUTLINE_VERTICAL];
+    CRGB outline_vert_overlay[OUTLINE_VERTICAL];
 
     CRGBPalette16 PaletteNoiseCurrent = CRGBPalette16(PartyColors_p);
     CRGBPalette16 PaletteAniCurrent = CRGBPalette16(PartyColors_p);
 
     CHSV color1 = CHSV(0, 255, 255);
     CHSV color2 = CHSV(64, 255, 255);
+
+    int outline_vert_mask = 0;
 };
 
 #endif

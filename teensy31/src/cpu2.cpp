@@ -11,17 +11,38 @@ static uint8_t cpu2_crc_errors = 0;
 static uint8_t cpu2_framing_errors = 0;
 static FastCRC8 CRC8;
 
+static bool wiimote_rumble = false;
+static uint8_t wiimote_leds = 0;
+
 // serial com data
 #define INCOMING_BUFFER_SIZE 16
 static uint8_t incoming_raw_buffer[INCOMING_BUFFER_SIZE];
 static uint8_t incoming_index = 0;
 static uint8_t incoming_decoded_buffer[INCOMING_BUFFER_SIZE];
 
+static int rumble_on_millis = 0;
+static int rumble_off_millis = 0;
+static int rumble_cycles = 0;
+static uint32_t rumble_event_time = 0;
+
 void cpu2_init(void) {
     Serial1.begin(115200);  // ESP32 cpu2 for Wiimote & ADXL345
 }
 
 void cpu2_update(struct cpu2_struct *cpu2) {
+    if (rumble_cycles > 0 && millis() > rumble_event_time) {
+        if (rumble_cycles % 2)
+            rumble_event_time = millis() + rumble_off_millis;
+        else
+            rumble_event_time = millis() + rumble_on_millis;
+
+        wiimote_rumble = !wiimote_rumble;
+        rumble_cycles--;
+    }
+
+    if (rumble_cycles == 0)
+        wiimote_rumble = 0;
+
     while (Serial1.available()) {
         // read in a byte
         incoming_raw_buffer[incoming_index] = Serial1.read();
@@ -126,9 +147,9 @@ void cpu2_update(struct cpu2_struct *cpu2) {
                         cpu2->wiimote_roll -= 90;
 
                         uint8_t rumble = 0x00;
-                        if (cpu2->wiimote_rumble) rumble = 0xF0;
+                        if (wiimote_rumble) rumble = 0xF0;
 
-                        Serial1.write((0x0F & cpu2->wiimote_leds) | rumble);  // send reply
+                        Serial1.write((0x0F & wiimote_leds) | rumble);  // send reply
                     }
                 }
             }
@@ -141,4 +162,14 @@ void cpu2_update(struct cpu2_struct *cpu2) {
             if (incoming_index == INCOMING_BUFFER_SIZE) incoming_index = 0;
         }
     }
+}
+
+void cpu2_set_rumble(int duration_on, int duration_off, int cycles) {
+    rumble_on_millis = duration_on;
+    rumble_off_millis = duration_off;
+    rumble_cycles = cycles * 2;
+}
+
+void cpu2_set_leds(uint8_t leds) {
+    wiimote_leds = leds;
 }

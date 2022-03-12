@@ -9,12 +9,14 @@ static AudioAnalyzeFFT256 fft256_1;
 static AudioConnection patchCord1(adc1, fft256_1);
 
 void fft_init(void) {
-    AudioMemory(3);
+    AudioMemory(6);
     fft256_1.windowFunction(AudioWindowHanning256);
     fft256_1.averageTogether(4);
 }
 
+
 bool fft_update(fft_struct *fft) {
+
     if (fft256_1.available() == false) return false;
 
     for (uint8_t i = 0; i < 16; i++) {
