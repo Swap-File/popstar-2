@@ -42,11 +42,17 @@ void loop() {
     // do hand updates;
     state_update(&helmet);
 
+    int pattern_fps = fps_fft;
+    int chin_fps = fps_fft;
+
     if (helmet.pattern_mode > PATTERN_NOISE_LAST)
-        fps_fft = 0;
+        pattern_fps = 0;
+
+    if (helmet.chin_mode == CHIN_CLONE_MID || helmet.chin_mode == CHIN_CLONE_MID )
+        chin_fps = 0;
 
     //decay the snapshot
-    cpu2_set_leds((0b0000001 & (fps_led >> 3)) | (0b00000010 & (fps_fft >> 2)) | ( (0b0000001 & (fps_led >> 4) &helmet.spotlight) << 3));
+    cpu2_set_leds((0b0000001 & (fps_led >> 3)) | (0b00000010 & (pattern_fps >> 2)) | (0b00000100 & (chin_fps >> 2)) |  ( (0b0000001 & (fps_led >> 4) &helmet.spotlight) << 3) );
 
     if (timer_100hz.check()) {
         fps_led++;

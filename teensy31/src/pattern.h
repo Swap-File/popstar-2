@@ -81,15 +81,17 @@ void pattern_update(const struct popstar_struct *helmet, CRGB Background_Array[M
         }
     }
 
-    if (helmet->chin_mode == CHIN_MIRROR_MID) {
-    }
-    if (helmet->chin_mode == CHIN_CLONE_MID) {
+    if (helmet->chin_mode == CHIN_CLONE_MID || helmet->chin_mode == CHIN_MIRROR_MID) { //temp do both
         for (uint8_t y = 0; y < CHIN_HEIGHT; y++) {
             for (uint8_t x = 0; x < CHIN_WIDTH; x++) {
-                Chin_array[x][y] = Background_Array[x + 8][y];
+                Chin_array[x][y] = Background_Array[x + 9][y];
             }
         }
     }
+}
+
+void pattern_background_timer(void) {
+    background_change_time = millis();
 }
 
 void pattern_set_background(uint8_t number, struct popstar_struct *helmet) {
@@ -123,6 +125,7 @@ void pattern_set_background(uint8_t number, struct popstar_struct *helmet) {
 
     background_change_time = millis();
 }
+
 
 void pattern_set_palette(uint8_t req, bool immediate, struct popstar_struct *helmet) {
     if (req == INCREMENT)
@@ -272,11 +275,9 @@ void pattern_auto_update(struct popstar_struct *helmet) {
         background_change_time = millis();
     }
 
-
-
 #define HEAD_ANGLE 25
     // head direction changes
-    //if (helmet->pattern_mode >= PATTERN_FFT_FIRST && helmet->pattern_mode <= PATTERN_FFT_LAST || helmet->pattern_mode >= PATTERN_NOISE_FIRST && helmet->pattern_mode <= PATTERN_NOISE_LAST) {
+    // if (helmet->pattern_mode >= PATTERN_FFT_FIRST && helmet->pattern_mode <= PATTERN_FFT_LAST || helmet->pattern_mode >= PATTERN_NOISE_FIRST && helmet->pattern_mode <= PATTERN_NOISE_LAST) {
     if (helmet->cpu2.head_roll < -HEAD_ANGLE) {
         helmet->pattern_mode = PATTERN_FFT_HORZ_BARS_RIGHT;
         background_change_time = millis();
@@ -286,7 +287,7 @@ void pattern_auto_update(struct popstar_struct *helmet) {
     } else if (helmet->cpu2.head_pitch < -HEAD_ANGLE) {
         helmet->pattern_mode = PATTERN_FFT_VERT_BARS_UP;
         background_change_time = millis();
-    }  else if (helmet->cpu2.head_pitch > HEAD_ANGLE) {
+    } else if (helmet->cpu2.head_pitch > HEAD_ANGLE) {
         helmet->pattern_mode = PATTERN_FFT_VERT_BARS_DOWN;
         background_change_time = millis();
     }

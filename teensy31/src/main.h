@@ -52,8 +52,8 @@
 //chin
 #define CHIN_FIRST 0
 #define CHIN_FFT_VERT 0
-#define CHIN_FFT_HORIZ 1
-#define CHIN_CLONE_MID 2
+#define CHIN_CLONE_MID 1
+#define CHIN_FFT_HORIZ 2
 #define CHIN_MIRROR_MID 3
 #define CHIN_LAST 3
 

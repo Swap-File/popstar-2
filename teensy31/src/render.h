@@ -24,7 +24,7 @@ static void decay_snapshots(void) {
 
 static uint16_t XY(uint16_t x, uint16_t y) {
     uint16_t tempindex = 0;
-    //determine if row is even or odd abd place pixel
+    // determine if row is even or odd abd place pixel
 
     if (x < 8) {
         tempindex = 5 * STRIP_LEN;
@@ -78,7 +78,7 @@ static uint16_t XY_chin(uint16_t x, uint16_t y) {
 }
 
 void do_line_h(CRGB Output_Array[], const CRGB outer_horiz[]) {
-    //start of left
+    // start of left
     for (int i = 0; i < OUTLINE_HORIZONTAL; i++) {
         if (i == 0 || i == 1) {
             for (int j = 54; j < 73; j++) {
@@ -186,7 +186,7 @@ void do_line_h(CRGB Output_Array[], const CRGB outer_horiz[]) {
             }
         }
 
-        //end of left
+        // end of left
 
         if (i == 22 || i == 23) {
             Output_Array[6 * STRIP_LEN + 128 + 16] += outer_horiz[i];  // forehead top
@@ -216,7 +216,7 @@ void do_line_h(CRGB Output_Array[], const CRGB outer_horiz[]) {
         }
 
         if (i == 26 || i == 27) {
-            Output_Array[6 * STRIP_LEN + 128 + 14] += outer_horiz[i];  //forehead top
+            Output_Array[6 * STRIP_LEN + 128 + 14] += outer_horiz[i];  // forehead top
             Output_Array[6 * STRIP_LEN + 128 + 2] += outer_horiz[i];   // forehead bottom
             Output_Array[4 * STRIP_LEN + 60 + 26] += outer_horiz[i];   // chin top
             Output_Array[4 * STRIP_LEN + 60 + 8] += outer_horiz[i];    // chin bottom
@@ -319,7 +319,7 @@ void do_line_h(CRGB Output_Array[], const CRGB outer_horiz[]) {
         if (i == 39)
             Output_Array[4 * STRIP_LEN + 60 + 13] += outer_horiz[i];  // chin ^
 
-        //right
+        // right
 
         if (i == OUTLINE_HORIZONTAL - 0 || i == OUTLINE_HORIZONTAL - 1) {
             for (int j = 54; j < 73; j++) {
@@ -429,7 +429,7 @@ void do_line_h(CRGB Output_Array[], const CRGB outer_horiz[]) {
             }
         }
 
-        //end of right
+        // end of right
     }
 }
 
@@ -865,7 +865,7 @@ void do_line_l(CRGB Output_Array[], const CRGB line_vert[], const CRGB outline_v
 }
 
 void render(CRGB Output_Array[], const struct popstar_struct *helmet) {
-    //MAIN PATTERN
+    // MAIN PATTERN
     for (uint8_t y = 0; y < 16; y++) {
         for (uint8_t x = 0; x < 24; x++) {
             CRGB final_color = CRGB(0, 0, 0);
@@ -880,7 +880,7 @@ void render(CRGB Output_Array[], const struct popstar_struct *helmet) {
         }
     }
 
-    //CHIN
+    // CHIN
 
     for (uint8_t x = 0; x < CHIN_WIDTH; x++) {
         for (uint8_t y = 0; y < CHIN_HEIGHT; y++) {
@@ -905,12 +905,16 @@ void render(CRGB Output_Array[], const struct popstar_struct *helmet) {
     do_line_mask(Output_Array, helmet->outline_vert_mask);
 
     // TOP
-
+    static uint8_t dim = 255;
     if (helmet->state == STATE_STOPPED || helmet->state == STATE_STARTING) {
         for (int i = 0; i < 100; i++) {
             Output_Array[i] = CRGB(0, 0, 0);
         }
-
+        if (helmet->spotlight) {
+            dim = 255;
+        } else {
+            dim = 0;
+        }
     } else {
         static uint8_t color = 0;
         for (int i = 0; i < 48; i++) {  // 3 fans
@@ -919,24 +923,26 @@ void render(CRGB Output_Array[], const struct popstar_struct *helmet) {
         color++;
 
         static uint8_t color2 = 0;
-        if (helmet->spotlight) {
-            for (int i = 49; i < 55; i++) {
-                Output_Array[i] = CHSV(color2 + i * 30, 255, 255);
-            }
-            color2++;
-            /*
-        if (millis() >> 7 & 0x01)
-            Output_Array[48] = CRGB(128, 128, 128);  // center
+
+        if (helmet->spotlight)
+            dim = qadd8(dim, 2);
         else
-            Output_Array[48] = CRGB(0, 0, 0);  // center
-        color++;
-        */
-            Output_Array[48] = CHSV(color2 + 128, 255, 255);
-        } else {
-            for (int i = 48; i < 55; i++) {
-                Output_Array[i] = CRGB(0, 0, 0);
-            }
+            dim = qsub8(dim, 2);
+
+        for (int i = 49; i < 55; i++) {
+            Output_Array[i] = CHSV(color2 + i * 30, 255, 255);
+            Output_Array[i].nscale8(dim);
         }
+        color2++;
+        /*
+    if (millis() >> 7 & 0x01)
+        Output_Array[48] = CRGB(128, 128, 128);  // center
+    else
+        Output_Array[48] = CRGB(0, 0, 0);  // center
+    color++;
+    */
+        Output_Array[48] = CHSV(color2 + 128, 255, 255);
+        Output_Array[48].nscale8(dim);
     }
 
     decay_snapshots();
